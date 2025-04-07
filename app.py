@@ -3,6 +3,9 @@ import re
 import string
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+import docx2txt
+import PyPDF2
+
 
 # -------------------------------
 # Page Config
@@ -15,8 +18,28 @@ st.subheader("Paste your resume and a job description. We'll compare them for yo
 # -------------------------------
 # Text Inputs
 # -------------------------------
-resume_text = st.text_area("Paste Your Resume Text", height=300)
-job_text = st.text_area("Paste Job Description", height=300)
+def extract_text_from_file(uploaded_file):
+    if uploaded_file is not None:
+        file_type = uploaded_file.name.split('.')[-1]
+        if file_type == 'txt':
+            return str(uploaded_file.read(), "utf-8")
+        elif file_type == 'pdf':
+            pdf_reader = PyPDF2.PdfReader(uploaded_file)
+            return "".join(page.extract_text() for page in pdf_reader.pages)
+        elif file_type == 'docx':
+            return docx2txt.process(uploaded_file)
+        else:
+            st.warning("Unsupported file type. Please upload a TXT, PDF, or DOCX file.")
+    return ""
+
+st.subheader("Upload Resume and Job Description")
+
+resume_file = st.file_uploader("Upload Your Resume", type=["pdf", "txt", "docx"])
+job_file = st.file_uploader("Upload Job Description", type=["pdf", "txt", "docx"])
+
+resume_text = extract_text_from_file(resume_file)
+job_text = extract_text_from_file(job_file)
+
 
 # -------------------------------
 # Text Cleaning Function
